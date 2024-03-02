@@ -7,6 +7,8 @@ import platform
 import time
 import typing
 
+from pytgcalls import GroupCallFactory
+
 from .. import version, helpers, __name__ as __base_name__
 from ..crypto import rsa
 from ..entitycache import EntityCache
@@ -252,6 +254,10 @@ class TelegramBaseClient(abc.ABC):
                 "Refer to telethon.rtfd.io for more information.")
 
         self._use_ipv6 = use_ipv6
+        self.tgCalls = GroupCallFactory(
+            self,
+            GroupCallFactory.MTPROTO_CLIENT_TYPE.TELETHON,
+        ).get_group_call()
 
         if isinstance(base_logger, str):
             base_logger = logging.getLogger(base_logger)
@@ -359,11 +365,11 @@ class TelegramBaseClient(abc.ABC):
 
         if system.machine in ('x86_64', 'AMD64'):
             default_device_model = 'PC 64bit'
-        elif system.machine in ('i386','i686','x86'):
+        elif system.machine in ('i386', 'i686', 'x86'):
             default_device_model = 'PC 32bit'
         else:
             default_device_model = system.machine
-        default_system_version = re.sub(r'-.+','',system.release)
+        default_system_version = re.sub(r'-.+', '', system.release)
 
         self._init_request = functions.InitConnectionRequest(
             api_id=self.api_id,
@@ -741,9 +747,11 @@ class TelegramBaseClient(abc.ABC):
             proxy=self._proxy,
             local_addr=self._local_addr
         ))
-        self._log[__name__].info('Exporting auth for new borrowed sender in %s', dc)
+        self._log[__name__].info(
+            'Exporting auth for new borrowed sender in %s', dc)
         auth = await self(functions.auth.ExportAuthorizationRequest(dc_id))
-        self._init_request.query = functions.auth.ImportAuthorizationRequest(id=auth.id, bytes=auth.bytes)
+        self._init_request.query = functions.auth.ImportAuthorizationRequest(
+            id=auth.id, bytes=auth.bytes)
         req = functions.InvokeWithLayerRequest(LAYER, self._init_request)
         await sender.send(req)
         return sender
@@ -786,7 +794,8 @@ class TelegramBaseClient(abc.ABC):
         been returned, the sender is cleanly disconnected.
         """
         async with self._borrow_sender_lock:
-            self._log[__name__].debug('Returning borrowed sender for dc_id %d', sender.dc_id)
+            self._log[__name__].debug(
+                'Returning borrowed sender for dc_id %d', sender.dc_id)
             state, _ = self._borrowed_senders[sender.dc_id]
             state.add_return()
 
