@@ -7,8 +7,6 @@ import platform
 import time
 import typing
 
-from pytgcalls import GroupCallFactory
-
 from .. import version, helpers, __name__ as __base_name__
 from ..crypto import rsa
 from ..entitycache import EntityCache
@@ -254,10 +252,6 @@ class TelegramBaseClient(abc.ABC):
                 "Refer to telethon.rtfd.io for more information.")
 
         self._use_ipv6 = use_ipv6
-        self.tgCalls = GroupCallFactory(
-            self,
-            GroupCallFactory.MTPROTO_CLIENT_TYPE.TELETHON,
-        ).get_group_call()
 
         if isinstance(base_logger, str):
             base_logger = logging.getLogger(base_logger)
